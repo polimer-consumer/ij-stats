@@ -4,6 +4,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import java.util.logging.Logger
 
 object MethodsParser {
     fun extractMethodsFromFile(psiFile: PsiFile): List<MethodInfo> {
