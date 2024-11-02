@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.23"
-    id("org.jetbrains.intellij") version "1.17.2"
+    id("org.jetbrains.kotlin.jvm") version "2.0.0"
+    id("org.jetbrains.intellij") version "1.17.4"
 }
 
 group = "com.polimerconsumer"
@@ -14,25 +14,31 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2023.2.5")
-    type.set("IC") // Target IDE Platform
+    version.set("2024.1.1")
+    type.set("IC")
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+    plugins.set(listOf("org.jetbrains.kotlin"))
+}
+
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.25") // Kotlin PSI
+    implementation(kotlin("stdlib"))
 }
 
 tasks {
-    // Set the JVM compatibility versions
     withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"
     }
+
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
     }
 
     patchPluginXml {
-        sinceBuild.set("232")
-        untilBuild.set("242.*")
+        sinceBuild.set("241")
+        untilBuild.set("241.*")
     }
 
     signPlugin {
