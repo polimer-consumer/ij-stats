@@ -1,0 +1,84 @@
+name: Build and Verify
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  # Job to prepare the environment and build the plugin
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.properties.outputs.version }}
+      pluginVerifierHomeDir: ${{ steps.properties.outputs.pluginVerifierHomeDir }}
+    steps:
+      # Checkout repository
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      # Validate Gradle Wrapper
+      - name: Gradle Wrapper Validation
+        uses: gradle/wrapper-validation-action@v1.1.0
+
+      # Set up Java environment using JBR 17
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: jbr
+          java-version: 17
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+
+      # Export properties
+      - name: Export Properties
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(./gradlew properties --console=plain -q)"
+          VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
+
+      # Build the plugin
+      - name: Build plugin
+        run: ./gradlew buildPlugin
+
+      # Upload the plugin as an artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: plugin
+          path: ./build/distributions/*.zip
+
+  # Job to verify the plugin using Plugin Verifier
+  verify:
+    name: Verify Plugin
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      # Set up Java environment using JBR 17
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: jbr
+          java-version: 17
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+
+      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+      - name: Verify Plugin
+        run: ./gradlew verifyPlugin
